@@ -17,7 +17,16 @@ class HordeYmlFileTest   extends TestCase
     {
         $uut = new HordeYmlFile(dirname(__DIR__, 1) . '/fixtures/empty/.horde.yml');
         $this->assertInstanceOf(HordeYmlFile::class, $uut);
-        $uut = new HordeYmlFile(dirname(__DIR__, 1) . '/fixtures/emptyjsonobject/.horde.yml');
+        $uut = new HordeYmlFile(dirname(__DIR__, 1) . '/fixtures/emptyyamlobject/.horde.yml');
         $this->assertInstanceOf(HordeYmlFile::class, $uut);
+    }
+
+    public function testApplyGracefulUpdates(): void
+    {
+        $uut = new HordeYmlFile(dirname(__DIR__, 1) . '/fixtures/emptyyamlobject/.horde.yml');
+        $this->assertInstanceOf(HordeYmlFile::class, $uut);
+        $uut->applyGracefulUpdates();
+        $this->assertEquals('horde', $uut->getVendor());          
+        $this->assertEquals('emptyyamlobject', $uut->getName());
     }
 }

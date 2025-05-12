@@ -25,6 +25,9 @@ dependencies:
   uses: readonly-parameters
   required:
     php: ^8.2
+    composer:
+      horde/version: ^1
+      horde/yaml: ^3
   dev:
     composer:
       phpunit/phpunit: ^12

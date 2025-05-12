@@ -45,6 +45,7 @@ class HordeYmlFile implements Stringable
 
     public function save(): void
     {
+        $this->applyGracefulUpdates();
         if (file_put_contents($this->filePath, $this) === false) {
             throw new RuntimeException("Failed to write to file: {$this->filePath}");
         }
@@ -60,10 +61,72 @@ class HordeYmlFile implements Stringable
 
     public function setName(string|Stringable $name): self
     {
-        if (mb_strpos((string) $name, '/') === false) {
+        if (mb_strpos((string) $name, '/') !== false) {
             throw new InvalidArgumentException("Invalid name: {$name}");
         }
-        $this->composerJson->name = (string) $name;
+        $this->hordeYml->name = (string) $name;
+        return $this;
+    }
+
+    public function getChangelog(): ChangelogYmlFile
+    {
+        return new ChangelogYmlFile(dirname($this->filePath()) . '/doc/changelog.yml');
+    }
+
+    /**
+     * TODO: Upgrade to property hooks when PHP 8.4 becomes the bottom supported version
+     */
+    public function setVendor(string $vendor): self
+    {
+        $this->hordeYml->vendor = $vendor;
+        return $this;
+    }
+    public function getVendor(bool $failIfMissing = false): string
+    {
+        if ($failIfMissing && !isset($this->hordeYml->vendor)) {
+            throw new RuntimeException("Package name not found in composer.json");
+        }
+        return $this->hordeYml->vendor ?? '';
+    }
+
+    public function getType(bool $failIfMissing = false): string
+    {
+        if ($failIfMissing && !isset($this->hordeYml->type)) {
+            throw new RuntimeException("Package type not found in composer.json");
+        }
+        return $this->hordeYml->type ?? '';
+    }
+
+    public function getHomePage(bool $failIfMissing = false): string
+    {
+        return $this->hordeYml->homepage ?? '';
+    }
+
+    public function setHomePage(string $homepage): self
+    {
+        // TODO: Should look like a URL
+        $this->hordeYml->homepage = (string) $homepage;
+        return $this;
+    }
+
+    public function setType(string $type): self
+    {
+        // TODO: Validate type
+        $this->hordeYml->type = (string) $type;
+        return $this;
+    }
+
+    /**
+     * Render out default-if-missing values for the .horde.yml file.
+     */
+    public function applyGracefulUpdates(): self
+    {
+        if ($this->getVendor() === '') {
+            $this->setVendor('horde');
+        }
+        if ($this->getName() === '') {
+            $this->setName(basename(dirname($this->filePath)));
+        }
         return $this;
     }
 }
