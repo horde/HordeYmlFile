@@ -10,3 +10,14 @@
     uri: http://www.horde.org/licenses/lgpl21
   notes: |
     Initial component version
+0.0.1-alpha2:
+  api: 1.0.0-alpha1
+  state:
+    release: true
+    api: true
+  date: 2025-05-12
+  license:
+    identifier: LGPL-2.1-only
+    uri: http://www.horde.org/licenses/lgpl21
+  notes: |
+    feat: Gracefully upgrade older .horde.yml files to expose defaults more explicitly
