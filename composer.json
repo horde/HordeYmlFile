@@ -11,7 +11,7 @@
             "role": "contributor"
         }
     ],
-    "time": "2025-05-12",
+    "time": "2026-03-04",
     "repositories": [],
     "require": {
         "php": "^8.2",
@@ -31,10 +31,16 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Horde\\HordeYmlFile\\Test\\": "test/"
+            "Horde\\HordeYmlFile\\Test\\": "test/",
+            "Horde\\HordeYmlFile\\Test\\Fixtures\\": "test/fixtures/"
         }
     },
     "config": {
         "allow-plugins": {}
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-FRAMEWORK_6_0": "0.x-dev"
+        }
     }
 }
