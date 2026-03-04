@@ -2,7 +2,7 @@
 vendor: maintaina
 name: Lancelot
 id: Lancelot
-description: '
-  Lancelot is a simple and elegant way to manage your projects.
-  It is designed to be easy to use and understand, while still being powerful enough to handle complex projects.'
+full: Lancelot Project Management
+description: Lancelot is a simple and elegant way to manage your projects. It is designed to be easy to use and understand, while still being powerful enough to handle complex projects.
+list: maintaina
 type: application

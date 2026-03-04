@@ -1,0 +1,51 @@
+---
+2.0.0:
+  api: 2.0.0
+  state:
+    release: stable
+    api: stable
+  date: 2024-03-15
+  license:
+    identifier: BSD-2-Clause
+    uri: http://www.opensource.org/licenses/bsd-license.php
+  notes: |
+    Major version 2.0 release.
+    - Redesigned API for better performance
+    - Added new features for project management
+    - Improved security and error handling
+1.5.2:
+  api: 1.0.0
+  state:
+    release: stable
+    api: stable
+  date: 2024-02-20
+  license:
+    identifier: BSD-2-Clause
+    uri: http://www.opensource.org/licenses/bsd-license.php
+  notes: |
+    Bug fix release.
+    - Fixed issue with project deletion
+    - Improved error messages
+1.5.0:
+  api: 1.0.0
+  state:
+    release: stable
+    api: stable
+  date: 2024-01-10
+  license:
+    identifier: BSD-2-Clause
+    uri: http://www.opensource.org/licenses/bsd-license.php
+  notes: |
+    Feature release.
+    - Added project templates
+    - Enhanced user interface
+1.0.0:
+  api: 1.0.0
+  state:
+    release: stable
+    api: stable
+  date: 2023-06-01
+  license:
+    identifier: BSD-2-Clause
+    uri: http://www.opensource.org/licenses/bsd-license.php
+  notes: Initial stable release.

@@ -8,7 +8,8 @@ use InvalidArgumentException;
 use RuntimeException;
 use stdClass;
 use Stringable;
-use Horde_Yaml;
+use Horde\Yaml\Yaml;
+use Horde\Yaml\Exception as YamlException;
 
 class HordeYmlFile implements Stringable
 {
@@ -27,20 +28,50 @@ class HordeYmlFile implements Stringable
         $content = file_get_contents($this->filePath);
         // Load YAML representation
         try {
-            $this->hordeYml = (object)Horde_Yaml::loadFile($this->filePath);
-        } catch (Horde_Yaml_Exception $e) {
+            // Handle empty files
+            if (trim($content) === '' || trim($content) === '---') {
+                $this->hordeYml = new stdClass();
+            } else {
+                $data = Yaml::load($content);
+                $this->hordeYml = $this->arrayToObject($data ?? []);
+            }
+        } catch (YamlException $e) {
             throw new InvalidHordeYmlFileException("Failed to parse YAML: {$this->filePath}", 0, $e);
         }
         $this->originalContent = $content;
     }
 
+    /**
+     * Recursively convert arrays to stdClass objects.
+     */
+    private function arrayToObject(mixed $data): mixed
+    {
+        if (is_array($data)) {
+            // Check if it's an associative array (should be object) or numeric array (stay as array)
+            if (empty($data)) {
+                return new stdClass();
+            }
+            // If all keys are numeric and sequential, keep as array
+            $keys = array_keys($data);
+            if ($keys === range(0, count($data) - 1)) {
+                // Numeric array - process values but keep as array
+                return array_map([$this, 'arrayToObject'], $data);
+            }
+            // Associative array - convert to object
+            $obj = new stdClass();
+            foreach ($data as $key => $value) {
+                $obj->$key = $this->arrayToObject($value);
+            }
+            return $obj;
+        }
+        return $data;
+    }
+
     public function __toString(): string
     {
-        $json = json_encode($this->composerJson, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-        if ($json === false) {
-            throw new JsonException("Failed to encode JSON: " . json_last_error_msg());
-        }
-        return $json;
+        // Convert objects back to arrays for YAML dumping
+        $data = json_decode(json_encode($this->hordeYml), true);
+        return Yaml::dump($data, ['wordwrap' => 78, 'indent' => 2]);
     }
 
     public function save(): void
@@ -70,7 +101,7 @@ class HordeYmlFile implements Stringable
 
     public function getChangelog(): ChangelogYmlFile
     {
-        return new ChangelogYmlFile(dirname($this->filePath()) . '/doc/changelog.yml');
+        return new ChangelogYmlFile(dirname($this->filePath) . '/doc/changelog.yml');
     }
 
     /**
@@ -115,6 +146,263 @@ class HordeYmlFile implements Stringable
         $this->hordeYml->type = (string) $type;
         return $this;
     }
+
+    // ========== List Methods ==========
+
+    public function getList(): string
+    {
+        return $this->hordeYml->list ?? '';
+    }
+
+    public function setList(string $list): self
+    {
+        $this->hordeYml->list = $list;
+        return $this;
+    }
+
+    // ========== Autoload Methods ==========
+
+    public function getAutoload(): ?Autoload
+    {
+        if (!isset($this->hordeYml->autoload)) {
+            return null;
+        }
+        return Autoload::fromStdClass($this->hordeYml->autoload);
+    }
+
+    public function setAutoload(Autoload $autoload): self
+    {
+        $this->hordeYml->autoload = $autoload->toStdClass();
+        return $this;
+    }
+
+    // ========== Provides Methods ==========
+
+    public function getProvides(): ?Provides
+    {
+        if (!isset($this->hordeYml->provides)) {
+            return null;
+        }
+        return Provides::fromStdClass($this->hordeYml->provides);
+    }
+
+    public function setProvides(Provides $provides): self
+    {
+        $this->hordeYml->provides = $provides->toStdClass();
+        return $this;
+    }
+
+    // ========== Version Methods ==========
+
+    public function getReleaseVersion(): string
+    {
+        return $this->hordeYml->version->release ?? '';
+    }
+
+    public function setReleaseVersion(string $version): self
+    {
+        if (!isset($this->hordeYml->version)) {
+            $this->hordeYml->version = new stdClass();
+        }
+        $this->hordeYml->version->release = $version;
+        return $this;
+    }
+
+    public function getApiVersion(): string
+    {
+        return $this->hordeYml->version->api ?? '';
+    }
+
+    public function setApiVersion(string $version): self
+    {
+        if (!isset($this->hordeYml->version)) {
+            $this->hordeYml->version = new stdClass();
+        }
+        $this->hordeYml->version->api = $version;
+        return $this;
+    }
+
+    // ========== State Methods ==========
+
+    public function getReleaseState(): string
+    {
+        return $this->hordeYml->state->release ?? 'alpha';
+    }
+
+    public function setReleaseState(string $state): self
+    {
+        if (!isset($this->hordeYml->state)) {
+            $this->hordeYml->state = new stdClass();
+        }
+        $this->hordeYml->state->release = $state;
+        return $this;
+    }
+
+    public function getApiState(): string
+    {
+        return $this->hordeYml->state->api ?? 'alpha';
+    }
+
+    public function setApiState(string $state): self
+    {
+        if (!isset($this->hordeYml->state)) {
+            $this->hordeYml->state = new stdClass();
+        }
+        $this->hordeYml->state->api = $state;
+        return $this;
+    }
+
+    // ========== Computed Properties ==========
+
+    public function getComposerName(): string
+    {
+        $vendor = $this->getVendor();
+        $name = $this->getName();
+        return strtolower($vendor . '/' . $name);
+    }
+
+    public function getId(): string
+    {
+        return $this->hordeYml->id ?? '';
+    }
+
+    public function setId(string $id): self
+    {
+        $this->hordeYml->id = $id;
+        return $this;
+    }
+
+    // ========== Full Name and Description ==========
+
+    public function getFullName(): string
+    {
+        return $this->hordeYml->full ?? $this->getName();
+    }
+
+    public function setFullName(string $full): self
+    {
+        $this->hordeYml->full = $full;
+        return $this;
+    }
+
+    public function getDescription(): string
+    {
+        return $this->hordeYml->description ?? '';
+    }
+
+    public function setDescription(string $description): self
+    {
+        $this->hordeYml->description = $description;
+        return $this;
+    }
+
+    // ========== License ==========
+
+    public function getLicense(): ?stdClass
+    {
+        return isset($this->hordeYml->license) ? (object)$this->hordeYml->license : null;
+    }
+
+    public function setLicense(string $identifier, string $uri): self
+    {
+        $this->hordeYml->license = (object)[
+            'identifier' => $identifier,
+            'uri' => $uri,
+        ];
+        return $this;
+    }
+
+    // ========== Authors ==========
+
+    public function getAuthors(): array
+    {
+        if (!isset($this->hordeYml->authors)) {
+            return [];
+        }
+        $authors = $this->hordeYml->authors;
+        // Convert to array (handles both array and object cases)
+        // Need to convert deeply - author entries may be objects even if authors is an array
+        return json_decode(json_encode($authors), true) ?: [];
+    }
+
+    public function setAuthors(array $authors): self
+    {
+        $this->hordeYml->authors = $authors;
+        return $this;
+    }
+
+    // ========== Dependencies ==========
+
+    public function getDependencies(): ?Dependencies
+    {
+        if (!isset($this->hordeYml->dependencies)) {
+            return null;
+        }
+        return Dependencies::fromStdClass($this->hordeYml->dependencies);
+    }
+
+    public function setDependencies(Dependencies $deps): self
+    {
+        $this->hordeYml->dependencies = $deps->toStdClass();
+        return $this;
+    }
+
+    public function getRequiredPhp(): string
+    {
+        return $this->getDependencies()?->getRequiredPhp() ?? '';
+    }
+
+    public function getRequiredExtensions(): array
+    {
+        return $this->getDependencies()?->getRequiredExtensions() ?? [];
+    }
+
+    // ========== Allowed Plugins ==========
+
+    public function getAllowedPlugins(): array
+    {
+        if (!isset($this->hordeYml->{'allow-plugins'})) {
+            return [];
+        }
+        $plugins = $this->hordeYml->{'allow-plugins'};
+        if ($plugins === true) {
+            return ['*' => true];
+        }
+        return is_array($plugins) ? $plugins : (array)$plugins;
+    }
+
+    public function setAllowedPlugins(array $plugins): self
+    {
+        $this->hordeYml->{'allow-plugins'} = (object)$plugins;
+        return $this;
+    }
+
+    // ========== Raw Access ==========
+
+    public function get(string $key, mixed $default = null): mixed
+    {
+        return $this->hordeYml->$key ?? $default;
+    }
+
+    public function set(string $key, mixed $value): self
+    {
+        $this->hordeYml->$key = $value;
+        return $this;
+    }
+
+    public function has(string $key): bool
+    {
+        return isset($this->hordeYml->$key);
+    }
+
+    // ========== Array Access ==========
+
+    public function toArray(): array
+    {
+        return json_decode(json_encode($this->hordeYml), true);
+    }
+
+    // ========== Graceful Updates ==========
 
     /**
      * Render out default-if-missing values for the .horde.yml file.
