@@ -1,19 +1,20 @@
 # horde/hordeymlfile
 
-Read and write .horde.yml files and changelog.yml files.
+Handles the .horde.yml and changelog.yml file formats.
 
-## Usage
+## Purpose
 
-## File Format
+The .horde.yml format is the source of truth for composer.json generation and other package meta information.
 
-https://wiki.horde.org/Doc/Dev/HordeYmlFormat
+## Documentation
+
+Format documentation is available at [doc/FORMAT.md](doc/FORMAT.md).
 
 ## Origin
 
-Same or similar implementations existed in
+Same or similar implementations existed in:
 - horde/horde-installer-plugin Composer plugin
 - horde/components Developer CLI
 - horde/hordectl Admin CLI
 
-Depending on these packages for further use cases was not practical so I split off and generalized as far as I could.
-
+Refactoring into a separate library facilitates reuse.
