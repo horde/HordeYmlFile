@@ -373,6 +373,118 @@ class HordeYmlFileTest extends TestCase
         $this->assertEquals('horde', $horde->getList());
     }
 
+    // ========== Keywords Tests ==========
+
+    public function testGetKeywords(): void
+    {
+        $file = $this->createTempHordeYml([
+            'keywords' => ['http', 'client', 'web'],
+        ]);
+
+        $horde = new HordeYmlFile($file);
+        $keywords = $horde->getKeywords();
+
+        $this->assertCount(3, $keywords);
+        $this->assertContains('http', $keywords);
+        $this->assertContains('client', $keywords);
+        $this->assertContains('web', $keywords);
+    }
+
+    public function testGetKeywordsReturnsEmptyArrayWhenMissing(): void
+    {
+        $file = $this->createTempHordeYml(['id' => 'test']);
+
+        $horde = new HordeYmlFile($file);
+        $this->assertEquals([], $horde->getKeywords());
+    }
+
+    public function testSetKeywords(): void
+    {
+        $file = $this->createTempHordeYml(['id' => 'test']);
+
+        $horde = new HordeYmlFile($file);
+        $horde->setKeywords(['keyword1', 'keyword2']);
+
+        $keywords = $horde->getKeywords();
+        $this->assertCount(2, $keywords);
+        $this->assertContains('keyword1', $keywords);
+        $this->assertContains('keyword2', $keywords);
+    }
+
+    public function testSetKeywordsEmpty(): void
+    {
+        $file = $this->createTempHordeYml([
+            'keywords' => ['old', 'keywords'],
+        ]);
+
+        $horde = new HordeYmlFile($file);
+        $horde->setKeywords([]);
+
+        $this->assertEquals([], $horde->getKeywords());
+    }
+
+    public function testKeywordsPersistAfterSave(): void
+    {
+        $file = $this->createTempHordeYml(['id' => 'test']);
+
+        $horde = new HordeYmlFile($file);
+        $horde->setKeywords(['persistence', 'test']);
+        $horde->save();
+
+        // Reload and verify
+        $reloaded = new HordeYmlFile($file);
+        $keywords = $reloaded->getKeywords();
+        $this->assertCount(2, $keywords);
+        $this->assertContains('persistence', $keywords);
+        $this->assertContains('test', $keywords);
+    }
+
+    public function testGetKeywordsNormalizes(): void
+    {
+        $file = $this->createTempHordeYml([
+            'keywords' => ['HTTP', 'Client', 'WEB', 'http'],  // Mixed case, duplicates
+        ]);
+
+        $horde = new HordeYmlFile($file);
+        $keywords = $horde->getKeywords();
+
+        // Should be normalized to lowercase and deduplicated
+        $this->assertCount(3, $keywords);
+        $this->assertContains('http', $keywords);
+        $this->assertContains('client', $keywords);
+        $this->assertContains('web', $keywords);
+    }
+
+    public function testGetKeywordsFiltersGarbage(): void
+    {
+        $file = $this->createTempHordeYml([
+            'keywords' => ['valid', '', '  ', 'also-valid', null],
+        ]);
+
+        $horde = new HordeYmlFile($file);
+        $keywords = $horde->getKeywords();
+
+        // Should filter out empty strings and null
+        $this->assertCount(2, $keywords);
+        $this->assertContains('valid', $keywords);
+        $this->assertContains('also-valid', $keywords);
+    }
+
+    public function testGetKeywordsTrimsWhitespace(): void
+    {
+        $file = $this->createTempHordeYml([
+            'keywords' => ['  spaces  ', 'tabs	', '  mixed  '],
+        ]);
+
+        $horde = new HordeYmlFile($file);
+        $keywords = $horde->getKeywords();
+
+        $this->assertCount(3, $keywords);
+        $this->assertContains('spaces', $keywords);
+        $this->assertContains('tabs', $keywords);
+        $this->assertContains('mixed', $keywords);
+    }
+
     // ========== Autoload Tests ==========
 
     public function testGetAutoload(): void
