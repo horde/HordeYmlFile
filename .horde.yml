@@ -17,7 +17,7 @@ authors:
     active: true
     role: contributor
 version:
-  release: 0.0.1-alpha3
+  release: 0.0.1-alpha4
   api: 1.0.0alpha1
 state:
   release: alpha

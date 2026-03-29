@@ -10,6 +10,19 @@
     uri: http://www.horde.org/licenses/lgpl21
   notes: |
     Initial component version
+0.0.1-alpha4:
+  api: 0.0.1-alpha4
+  state:
+    release: alpha
+    api: alpha
+  date: 2026-03-29
+  license:
+    identifier: LGPL-2.1-only
+    uri: https://spdx.org/licenses/LGPL-2.1-only.html
+  notes: |-
+    style: php-cs-fixer
+    feat: Support for composer.json and packagist.org keywords
+    docs: Document the .horde.yml format as understood by this library
 0.0.1-alpha3:
   api: 1.0.0-alpha1
   state:
