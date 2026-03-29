@@ -25,7 +25,7 @@ class HordeYmlFileTest extends TestCase
     {
         $this->testDataDir = dirname(__DIR__) . '/fixtures/generated';
         if (!is_dir($this->testDataDir)) {
-            mkdir($this->testDataDir, 0755, true);
+            mkdir($this->testDataDir, 0o755, true);
         }
     }
 
@@ -826,7 +826,7 @@ class HordeYmlFileTest extends TestCase
         ]);
 
         $horde = new HordeYmlFile($file);
-        $yaml = (string)$horde;
+        $yaml = (string) $horde;
 
         $this->assertStringContainsString('id:', $yaml);
         $this->assertStringContainsString('Test', $yaml);

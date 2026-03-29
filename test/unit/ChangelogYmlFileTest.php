@@ -25,7 +25,7 @@ class ChangelogYmlFileTest extends TestCase
     {
         $this->testDataDir = dirname(__DIR__) . '/fixtures/generated';
         if (!is_dir($this->testDataDir)) {
-            mkdir($this->testDataDir, 0755, true);
+            mkdir($this->testDataDir, 0o755, true);
         }
     }
 
@@ -282,7 +282,7 @@ class ChangelogYmlFileTest extends TestCase
         ]);
 
         $changelog = new ChangelogYmlFile($file);
-        $yaml = (string)$changelog;
+        $yaml = (string) $changelog;
 
         $this->assertStringContainsString('1.0.0', $yaml);
         $this->assertStringContainsString('notes', $yaml);
@@ -297,7 +297,7 @@ class ChangelogYmlFileTest extends TestCase
         ]);
 
         $changelog = new ChangelogYmlFile($file);
-        $yaml = (string)$changelog;
+        $yaml = (string) $changelog;
 
         $this->assertStringContainsString('1.0.0', $yaml);
         $this->assertStringContainsString('2.0.0', $yaml);

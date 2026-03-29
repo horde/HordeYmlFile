@@ -5,6 +5,10 @@ full: Handle .horde.yml file and changelog.yml file
 description: Handle .horde.yml file and changelog.yml file
 list: horde
 type: library
+keywords:
+  - metadata
+  - changelog
+  - composer
 authors:
   -
     name: Ralf Lang

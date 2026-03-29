@@ -65,7 +65,7 @@ class DependencySet
         $ext = [];
         if (isset($data->ext)) {
             // Extensions can be array or object (legacy formats)
-            $ext = is_array($data->ext) ? $data->ext : (array)$data->ext;
+            $ext = is_array($data->ext) ? $data->ext : (array) $data->ext;
         }
 
         return new self(
@@ -135,10 +135,10 @@ class DependencySet
             $result->php = $this->php;
         }
         if (!empty($this->composer)) {
-            $result->composer = (object)$this->composer;
+            $result->composer = (object) $this->composer;
         }
         if (!empty($this->pear)) {
-            $result->pear = (object)$this->pear;
+            $result->pear = (object) $this->pear;
         }
         if (!empty($this->ext)) {
             $result->ext = $this->ext;

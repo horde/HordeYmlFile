@@ -51,8 +51,8 @@ class Autoload
 
         return new self(
             psr4: $psr4,
-            classmap: isset($data->classmap) ? (array)$data->classmap : [],
-            files: isset($data->files) ? (array)$data->files : [],
+            classmap: isset($data->classmap) ? (array) $data->classmap : [],
+            files: isset($data->files) ? (array) $data->files : [],
         );
     }
 
@@ -93,7 +93,7 @@ class Autoload
     {
         $result = new stdClass();
         if (!empty($this->psr4)) {
-            $result->{'psr-4'} = (object)$this->psr4;
+            $result->{'psr-4'} = (object) $this->psr4;
         }
         if (!empty($this->classmap)) {
             $result->classmap = $this->classmap;
