@@ -35,7 +35,7 @@ class Provides
      */
     public static function fromStdClass(stdClass $data): self
     {
-        return new self((array)$data);
+        return new self((array) $data);
     }
 
     /**
@@ -69,7 +69,7 @@ class Provides
      */
     public function toStdClass(): stdClass
     {
-        return (object)$this->implementations;
+        return (object) $this->implementations;
     }
 
     /**

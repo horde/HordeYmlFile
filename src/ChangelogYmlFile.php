@@ -80,31 +80,31 @@ class ChangelogYmlFile implements Stringable
 
     public function hasVersion(string $version): bool
     {
-        $changelog = (array)$this->changelogYml;
+        $changelog = (array) $this->changelogYml;
         return isset($changelog[$version]);
     }
 
     public function getVersionEntry(string $version): ?stdClass
     {
-        $changelog = (array)$this->changelogYml;
-        return isset($changelog[$version]) ? (object)$changelog[$version] : null;
+        $changelog = (array) $this->changelogYml;
+        return isset($changelog[$version]) ? (object) $changelog[$version] : null;
     }
 
     public function addVersionEntry(string $version, array $entry): self
     {
-        $changelog = (array)$this->changelogYml;
-        $changelog[$version] = (object)$entry;
+        $changelog = (array) $this->changelogYml;
+        $changelog[$version] = (object) $entry;
 
         // Sort by version (newest first) using natural comparison
         uksort($changelog, fn($a, $b) => strnatcmp($b, $a));
 
-        $this->changelogYml = (object)$changelog;
+        $this->changelogYml = (object) $changelog;
         return $this;
     }
 
     public function getVersions(): array
     {
-        return array_keys((array)$this->changelogYml);
+        return array_keys((array) $this->changelogYml);
     }
 
     public function toArray(): array

@@ -324,12 +324,12 @@ class HordeYmlFile implements Stringable
 
     public function getLicense(): ?stdClass
     {
-        return isset($this->hordeYml->license) ? (object)$this->hordeYml->license : null;
+        return isset($this->hordeYml->license) ? (object) $this->hordeYml->license : null;
     }
 
     public function setLicense(string $identifier, string $uri): self
     {
-        $this->hordeYml->license = (object)[
+        $this->hordeYml->license = (object) [
             'identifier' => $identifier,
             'uri' => $uri,
         ];
@@ -392,12 +392,12 @@ class HordeYmlFile implements Stringable
         if ($plugins === true) {
             return ['*' => true];
         }
-        return is_array($plugins) ? $plugins : (array)$plugins;
+        return is_array($plugins) ? $plugins : (array) $plugins;
     }
 
     public function setAllowedPlugins(array $plugins): self
     {
-        $this->hordeYml->{'allow-plugins'} = (object)$plugins;
+        $this->hordeYml->{'allow-plugins'} = (object) $plugins;
         return $this;
     }
 
