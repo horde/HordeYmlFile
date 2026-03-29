@@ -160,6 +160,30 @@ class HordeYmlFile implements Stringable
         return $this;
     }
 
+    // ========== Keywords Methods ==========
+
+    public function getKeywords(): array
+    {
+        if (!isset($this->hordeYml->keywords)) {
+            return [];
+        }
+        $keywords = $this->hordeYml->keywords;
+        // Convert to simple array of strings
+        $keywords = json_decode(json_encode($keywords), true) ?: [];
+        // Normalize: filter out garbage, lowercase, deduplicate
+        $keywords = array_filter($keywords, fn($k) => is_string($k) && trim($k) !== '');
+        $keywords = array_map('strtolower', $keywords);
+        $keywords = array_map('trim', $keywords);
+        $keywords = array_unique($keywords);
+        return array_values($keywords);
+    }
+
+    public function setKeywords(array $keywords): self
+    {
+        $this->hordeYml->keywords = $keywords;
+        return $this;
+    }
+
     // ========== Autoload Methods ==========
 
     public function getAutoload(): ?Autoload
