@@ -142,7 +142,12 @@ class HordeYmlFile implements Stringable
 
     public function setType(string $type): self
     {
-        // TODO: Validate type
+        $validTypes = ['library', 'application', 'component', 'horde-theme', 'extension'];
+        if (!in_array($type, $validTypes, true)) {
+            throw new InvalidArgumentException(
+                "Invalid type: {$type}. Must be one of: " . implode(', ', $validTypes)
+            );
+        }
         $this->hordeYml->type = (string) $type;
         return $this;
     }
