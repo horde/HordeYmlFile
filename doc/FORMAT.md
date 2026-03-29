@@ -136,12 +136,24 @@ The component type. Determines the composer type and installation behavior.
 - `horde-library` - Library which needs features of the horde/horde-installer-plugin.
 - `application` - Standard PHP composer application. Composer tool may auto-sense to transform to horde-application in some cases.
 - `horde-theme` - A Horde Theme package.
+- `extension` - PHP extension (C code) distributed via PIE (PHP Installer for Extensions). Generates composer type `php-ext`.
 - `composer-plugin` - A composer plugin.
 
 **Example:**
 ```yaml
 type: library
 ```
+
+**Extension example:**
+```yaml
+type: extension
+```
+
+**Important for extensions:**
+- Extension type generates `"type": "php-ext"` in composer.json (PIE standard)
+- Extensions do NOT get autoload or autoload-dev sections (C extensions don't use PHP autoloading)
+- Extensions do NOT require horde/horde-installer-plugin
+- Extensions MUST include a `provides` section declaring the extension (see below)
 
 ### Discovery and Metadata Fields
 
@@ -476,16 +488,36 @@ autoload-dev:
 ### Virtual Packages
 
 #### `provides` (object, optional)
-Declares that this package provides specific interfaces or virtual packages.
+Declares that this package provides specific interfaces, virtual packages, or PHP extensions.
 
-**Example:**
+**For PSR implementations:**
 ```yaml
 provides:
   psr/log-implementation: 3.0.0
   psr/http-client-implementation: 1.0.0
 ```
 
-**Use case:** Allows other packages to depend on an interface rather than specific implementation.
+**For PHP extensions (REQUIRED for type: extension):**
+```yaml
+provides:
+  ext-extension_name: 1.0.0
+```
+
+**Example for Horde extension:**
+```yaml
+provides:
+  ext-horde_xxhash: 3.0.0
+```
+
+**Extension naming conventions:**
+- Extension names in `provides` use the `ext-` prefix
+- Extension names follow PHP internal naming (lowercase, underscores allowed)
+- Hyphens in package names typically become underscores in extension names
+- Example: Package `horde/ext-xxhash` provides `ext-horde_xxhash`
+
+**Use cases:**
+- **PSR implementations:** Allows packages to depend on an interface rather than specific implementation
+- **PHP extensions:** Required for PIE (PHP Installer for Extensions) compatibility. PIE uses this to verify which extension a package provides.
 
 ### Composer Configuration
 
@@ -663,6 +695,86 @@ authors:
     role: lead
 ```
 
+## Extension Example
+
+Example .horde.yml for a PIE-distributed PHP extension:
+
+```yaml
+---
+id: ext-xxhash
+name: ext-xxhash
+vendor: horde
+full: xxHash hashing extension for PHP
+description: PHP extension that implements the xxHash32 hashing algorithm
+type: extension
+keywords:
+  - hash
+  - xxhash
+  - performance
+  - hashing
+version:
+  release: 3.0.0
+  api: 3.0.0
+state:
+  release: stable
+  api: stable
+license:
+  identifier: BSD-2-Clause
+  uri: http://www.horde.org/licenses/bsd
+authors:
+  - name: Michael Slusarz
+    user: slusarz
+    email: slusarz@horde.org
+    active: false
+    role: lead
+  - name: Ralf Lang
+    user: rlang
+    email: ralf.lang@ralf-lang.de
+    active: true
+    role: lead
+provides:
+  ext-horde_xxhash: 3.0.0
+dependencies:
+  required:
+    php: ^8.2
+  dev:
+    composer:
+      phpunit/phpunit: ^12
+homepage: https://www.horde.org
+```
+
+**Key differences for extensions:**
+- `type: extension` (not `library`)
+- `provides: ext-extension_name: version` (REQUIRED)
+- No `autoload` or `autoload-dev` sections needed
+- Repository naming: `horde/ext-name` (lowercase with `ext-` prefix)
+
+**Generated composer.json will have:**
+- `"type": "php-ext"` (PIE standard)
+- `"provide": { "ext-horde_xxhash": "3.0.0" }`
+- No autoload sections
+- No horde-installer-plugin requirement
+
+**Repository structure for extensions:**
+```
+horde/ext-xxhash/
+├── .horde.yml
+├── composer.json (generated)
+├── doc/
+│   └── changelog.yml
+├── config.m4
+├── *.c (C source files)
+├── *.h (header files)
+├── tests/ (PHPT tests)
+├── LICENSE
+└── README.md
+```
+
+**PIE Installation:**
+```bash
+pie install horde/ext-xxhash
+```
+
 ## Field Processing Rules
 
 ### String Normalization
@@ -717,6 +829,12 @@ horde-components release h6
 
 ## Version History
 
+- **1.1** (2026-03-29): Added PHP extension support
+  - Added `extension` as valid type
+  - Documented PIE (PHP Installer for Extensions) compatibility
+  - Added extension-specific `provides` documentation
+  - Added complete extension example
+  - Documented extension repository structure and naming
 - **1.0** (2026-03-29): Initial comprehensive documentation
   - Documented all current fields
   - Added keywords field specification
