@@ -323,6 +323,46 @@ class HordeYmlFileTest extends TestCase
         $this->assertEquals('application', $horde->getType());
     }
 
+    public function testSetTypeMetapackage(): void
+    {
+        $file = $this->createTempHordeYml(['id' => 'test']);
+        $horde = new HordeYmlFile($file);
+        $horde->setType('metapackage');
+        $this->assertEquals('metapackage', $horde->getType());
+    }
+
+    public function testSetTypeComposerPlugin(): void
+    {
+        $file = $this->createTempHordeYml(['id' => 'test']);
+        $horde = new HordeYmlFile($file);
+        $horde->setType('composer-plugin');
+        $this->assertEquals('composer-plugin', $horde->getType());
+    }
+
+    public function testSetTypeProject(): void
+    {
+        $file = $this->createTempHordeYml(['id' => 'test']);
+        $horde = new HordeYmlFile($file);
+        $horde->setType('project');
+        $this->assertEquals('project', $horde->getType());
+    }
+
+    public function testSetTypePhpExt(): void
+    {
+        $file = $this->createTempHordeYml(['id' => 'test']);
+        $horde = new HordeYmlFile($file);
+        $horde->setType('php-ext');
+        $this->assertEquals('php-ext', $horde->getType());
+    }
+
+    public function testSetTypePhpExtZend(): void
+    {
+        $file = $this->createTempHordeYml(['id' => 'test']);
+        $horde = new HordeYmlFile($file);
+        $horde->setType('php-ext-zend');
+        $this->assertEquals('php-ext-zend', $horde->getType());
+    }
+
     public function testGetHomePage(): void
     {
         $file = $this->createTempHordeYml([
@@ -483,6 +523,94 @@ class HordeYmlFileTest extends TestCase
         $this->assertContains('spaces', $keywords);
         $this->assertContains('tabs', $keywords);
         $this->assertContains('mixed', $keywords);
+    }
+
+    // ========== Support Tests ==========
+
+    public function testGetSupportReturnsNullWhenMissing(): void
+    {
+        $file = $this->createTempHordeYml(['id' => 'test']);
+
+        $horde = new HordeYmlFile($file);
+        $this->assertNull($horde->getSupport());
+    }
+
+    public function testGetSupport(): void
+    {
+        $file = $this->createTempHordeYml([
+            'support' => [
+                'email' => 'dev@lists.horde.org',
+                'issues' => 'https://github.com/horde/horde/issues',
+                'docs' => 'https://www.horde.org/libraries/Horde_Http',
+            ],
+        ]);
+
+        $horde = new HordeYmlFile($file);
+        $support = $horde->getSupport();
+
+        $this->assertInstanceOf(\Horde\HordeYmlFile\Support::class, $support);
+        $this->assertEquals('dev@lists.horde.org', $support->getEmail());
+        $this->assertEquals('https://github.com/horde/horde/issues', $support->getIssues());
+        $this->assertEquals('https://www.horde.org/libraries/Horde_Http', $support->getDocs());
+    }
+
+    public function testSetSupport(): void
+    {
+        $file = $this->createTempHordeYml(['id' => 'test']);
+
+        $support = (new \Horde\HordeYmlFile\SupportBuilder())
+            ->email('test@example.org')
+            ->issues('https://example.org/issues')
+            ->build();
+
+        $horde = new HordeYmlFile($file);
+        $horde->setSupport($support);
+
+        $retrieved = $horde->getSupport();
+        $this->assertNotNull($retrieved);
+        $this->assertEquals('test@example.org', $retrieved->getEmail());
+        $this->assertEquals('https://example.org/issues', $retrieved->getIssues());
+    }
+
+    public function testSetSupportEmpty(): void
+    {
+        $file = $this->createTempHordeYml([
+            'support' => [
+                'email' => 'old@example.org',
+            ],
+        ]);
+
+        $emptySupport = new \Horde\HordeYmlFile\Support();
+
+        $horde = new HordeYmlFile($file);
+        $horde->setSupport($emptySupport);
+
+        // Empty support should remove the field
+        $this->assertNull($horde->getSupport());
+    }
+
+    public function testSupportPersistsAfterSave(): void
+    {
+        $file = $this->createTempHordeYml(['id' => 'test']);
+
+        $support = (new \Horde\HordeYmlFile\SupportBuilder())
+            ->email('persist@example.org')
+            ->issues('https://example.org/issues')
+            ->docs('https://example.org/docs')
+            ->build();
+
+        $horde = new HordeYmlFile($file);
+        $horde->setSupport($support);
+        $horde->save();
+
+        // Reload and verify
+        $reloaded = new HordeYmlFile($file);
+        $retrieved = $reloaded->getSupport();
+
+        $this->assertNotNull($retrieved);
+        $this->assertEquals('persist@example.org', $retrieved->getEmail());
+        $this->assertEquals('https://example.org/issues', $retrieved->getIssues());
+        $this->assertEquals('https://example.org/docs', $retrieved->getDocs());
     }
 
     // ========== Autoload Tests ==========
