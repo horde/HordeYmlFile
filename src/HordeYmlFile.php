@@ -142,7 +142,15 @@ class HordeYmlFile implements Stringable
 
     public function setType(string $type): self
     {
-        $validTypes = ['library', 'application', 'component', 'horde-theme', 'extension'];
+        $validTypes = [
+            // Horde types
+            'library', 'application', 'component', 'horde-theme', 'extension',
+            // Direct Composer types
+            'metapackage', 'composer-plugin', 'project',
+            // PHP extension types
+            'php-ext', 'php-ext-zend',
+        ];
+
         if (!in_array($type, $validTypes, true)) {
             throw new InvalidArgumentException(
                 "Invalid type: {$type}. Must be one of: " . implode(', ', $validTypes)
@@ -186,6 +194,26 @@ class HordeYmlFile implements Stringable
     public function setKeywords(array $keywords): self
     {
         $this->hordeYml->keywords = $keywords;
+        return $this;
+    }
+
+    // ========== Support Methods ==========
+
+    public function getSupport(): ?Support
+    {
+        if (!isset($this->hordeYml->support)) {
+            return null;
+        }
+        return Support::fromStdClass($this->hordeYml->support);
+    }
+
+    public function setSupport(Support $support): self
+    {
+        if ($support->isEmpty()) {
+            unset($this->hordeYml->support);
+        } else {
+            $this->hordeYml->support = $support->toStdClass();
+        }
         return $this;
     }
 
