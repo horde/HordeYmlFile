@@ -1,7 +1,7 @@
 # .horde.yml Format Specification
 
-Version: 1.0
-Last Updated: 2026-03-29
+Version: 1.2
+Last Updated: 2026-03-30
 
 ## Overview
 
@@ -25,6 +25,17 @@ type: string
 homepage: string
 list: string
 keywords: [string, ...]
+support:
+  email: string
+  issues: string
+  forum: string
+  wiki: string
+  chat: string
+  docs: string
+  source: string
+  irc: string
+  rss: string
+  security: string
 version:
   release: string
   api: string
@@ -132,16 +143,49 @@ description: |
 The component type. Determines the composer type and installation behavior.
 
 **Valid values:**
-- `library` - Standard PHP composer library. Composer tool may auto-sense horde-library in some cases.
-- `horde-library` - Library which needs features of the horde/horde-installer-plugin.
-- `application` - Standard PHP composer application. Composer tool may auto-sense to transform to horde-application in some cases.
-- `horde-theme` - A Horde Theme package.
-- `extension` - PHP extension (C code) distributed via PIE (PHP Installer for Extensions). Generates composer type `php-ext`.
-- `composer-plugin` - A composer plugin.
+
+**Horde Types** (mapped to composer types):
+- `library` - Standard PHP library (auto-detects `horde-library` if js/ or migration/ dirs exist)
+- `application` - Horde application (maps to `horde-application`)
+- `component` - Alias for application (maps to `horde-application`)
+- `horde-theme` - Horde theme (maps to `horde-theme`)
+- `extension` - Standard PHP extension (maps to `php-ext`)
+
+**Direct Composer Types** (pass through as-is):
+- `metapackage` - Dependency-only package with no files (e.g., horde/groupware)
+- `composer-plugin` - Composer plugin (e.g., horde/horde-installer-plugin)
+- `project` - Full application/CMS for end users (e.g., horde/bundle)
+- `php-ext` - Explicit PHP extension type (alias for `extension`)
+- `php-ext-zend` - Zend engine extension (rare: opcache, xdebug)
+
+**Composer Type Mapping Table:**
+
+| .horde.yml type | composer.json type | Notes |
+|-----------------|-------------------|-------|
+| `library` | `library` or `horde-library` | Auto-detects based on js/ or migration/ directories |
+| `application` | `horde-application` | Horde framework applications |
+| `component` | `horde-application` | Alias for application |
+| `horde-theme` | `horde-theme` | Pass through |
+| `extension` | `php-ext` | Standard PHP extensions (PIE) |
+| `metapackage` | `metapackage` | Pass through |
+| `composer-plugin` | `composer-plugin` | Pass through |
+| `project` | `project` | Pass through |
+| `php-ext` | `php-ext` | Pass through |
+| `php-ext-zend` | `php-ext-zend` | Pass through |
 
 **Example:**
 ```yaml
 type: library
+```
+
+**Metapackage example:**
+```yaml
+type: metapackage
+```
+
+**Composer plugin example:**
+```yaml
+type: composer-plugin
 ```
 
 **Extension example:**
@@ -202,6 +246,53 @@ keywords: []
 ```
 
 **Note:** Omitting the `keywords` field is equivalent to an empty array. Explicit empty key is preferred over omitting.
+
+#### `support` (object, optional)
+
+Contact and resource information for package users. Displayed on Packagist and used by tools to help users find help and report issues.
+
+**Structure:** Object with optional string fields. All fields are optional.
+
+**Fields:**
+- `email` - Support email address (e.g., dev@lists.horde.org)
+- `issues` - Bug tracker URL (e.g., https://github.com/horde/horde/issues)
+- `forum` - Discussion forum URL
+- `wiki` - Wiki documentation URL
+- `chat` - Chat platform URL (Discord, Gitter, Slack, etc.)
+- `docs` - Documentation URL (e.g., https://www.horde.org/libraries/Horde_Http)
+- `source` - Source code browser URL (e.g., https://github.com/horde/Http)
+- `irc` - IRC channel (format: irc://server/channel)
+- `rss` - RSS feed URL
+- `security` - Vulnerability disclosure policy URL
+
+**Example:**
+```yaml
+support:
+  email: dev@lists.horde.org
+  issues: https://github.com/horde/horde/issues
+  source: https://github.com/horde/Http
+  docs: https://www.horde.org/libraries/Horde_Http
+  wiki: https://wiki.horde.org/Http
+```
+
+**Minimal example:**
+```yaml
+support:
+  issues: https://github.com/horde/horde/issues
+  email: dev@lists.horde.org
+```
+
+**Composer mapping:** Maps directly to `support` section in composer.json with same field names.
+
+**Common Horde patterns:**
+```yaml
+# Standard Horde component
+support:
+  issues: https://github.com/horde/horde/issues
+  source: https://github.com/horde/ComponentName
+  docs: https://www.horde.org/libraries/Horde_ComponentName
+  email: dev@lists.horde.org
+```
 
 ### Version and State Fields
 
