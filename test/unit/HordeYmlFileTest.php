@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Horde\HordeYmlFile\HordeYmlFile;
 use Horde\HordeYmlFile\InvalidHordeYmlFileException;
+use Horde\HordeYmlFile\VendorAsset;
 use Horde\Yaml\Yaml;
 
 /**
@@ -888,6 +889,89 @@ class HordeYmlFileTest extends TestCase
         $this->assertEquals('^8.2', $deps->getRequired()->getPhp());
         $this->assertNotNull($deps->getOptional());
         $this->assertEquals(['gd'], $deps->getOptional()->getExtensions());
+    }
+
+    // ========== Vendor Assets Tests ==========
+
+    public function testGetVendorAssetsReturnsEmptyWhenMissing(): void
+    {
+        $file = $this->createTempHordeYml(['id' => 'test']);
+
+        $horde = new HordeYmlFile($file);
+        $this->assertSame([], $horde->getVendorAssets());
+    }
+
+    public function testGetVendorAssets(): void
+    {
+        $file = $this->createTempHordeYml([
+            'id' => 'test',
+            'vendor-assets' => [
+                [
+                    'package' => 'tinymce/tinymce',
+                    'type' => 'js',
+                    'target' => 'tinymce',
+                ],
+            ],
+        ]);
+
+        $horde = new HordeYmlFile($file);
+        $assets = $horde->getVendorAssets();
+
+        $this->assertCount(1, $assets);
+        $this->assertInstanceOf(VendorAsset::class, $assets[0]);
+        $this->assertSame('tinymce/tinymce', $assets[0]->package);
+        $this->assertSame('js', $assets[0]->type);
+        $this->assertSame('tinymce', $assets[0]->target);
+        $this->assertSame('', $assets[0]->source);
+    }
+
+    public function testSetVendorAssets(): void
+    {
+        $file = $this->createTempHordeYml(['id' => 'test']);
+
+        $horde = new HordeYmlFile($file);
+        $horde->setVendorAssets([
+            new VendorAsset(
+                package: 'tinymce/tinymce',
+                type: 'js',
+                source: '',
+                target: 'tinymce',
+            ),
+        ]);
+
+        $assets = $horde->getVendorAssets();
+        $this->assertCount(1, $assets);
+        $this->assertSame('tinymce/tinymce', $assets[0]->package);
+        $this->assertSame('js', $assets[0]->type);
+        $this->assertSame('tinymce', $assets[0]->target);
+    }
+
+    public function testGetVendorAssetsWithMultipleEntries(): void
+    {
+        $file = $this->createTempHordeYml([
+            'id' => 'test',
+            'vendor-assets' => [
+                [
+                    'package' => 'tinymce/tinymce',
+                    'type' => 'js',
+                    'target' => 'tinymce',
+                ],
+                [
+                    'package' => 'vendor/other',
+                    'type' => 'js',
+                    'source' => 'dist',
+                    'target' => 'other',
+                ],
+            ],
+        ]);
+
+        $horde = new HordeYmlFile($file);
+        $assets = $horde->getVendorAssets();
+
+        $this->assertCount(2, $assets);
+        $this->assertSame('tinymce/tinymce', $assets[0]->package);
+        $this->assertSame('vendor/other', $assets[1]->package);
+        $this->assertSame('dist', $assets[1]->source);
     }
 
     // ========== Allowed Plugins Tests ==========
