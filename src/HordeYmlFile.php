@@ -414,6 +414,42 @@ class HordeYmlFile implements Stringable
         return $this->getDependencies()?->getRequiredExtensions() ?? [];
     }
 
+    // ========== Vendor Assets ==========
+
+    /**
+     * Get vendor asset declarations.
+     *
+     * @return VendorAsset[]
+     */
+    public function getVendorAssets(): array
+    {
+        if (!isset($this->hordeYml->{'vendor-assets'})) {
+            return [];
+        }
+        $assets = $this->hordeYml->{'vendor-assets'};
+        if (!is_array($assets)) {
+            return [];
+        }
+        return array_map(
+            fn($item) => VendorAsset::fromStdClass($item),
+            $assets,
+        );
+    }
+
+    /**
+     * Set vendor asset declarations.
+     *
+     * @param VendorAsset[] $assets
+     */
+    public function setVendorAssets(array $assets): self
+    {
+        $this->hordeYml->{'vendor-assets'} = array_map(
+            fn(VendorAsset $a) => $a->toStdClass(),
+            $assets,
+        );
+        return $this;
+    }
+
     // ========== Allowed Plugins ==========
 
     public function getAllowedPlugins(): array
