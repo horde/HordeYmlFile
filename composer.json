@@ -21,7 +21,7 @@
         "issues": "https://github.com/horde/horde/issues",
         "source": "https://github.com/horde/HordeYmlFile"
     },
-    "time": "2026-03-30",
+    "time": "2026-04-12",
     "repositories": [],
     "require": {
         "php": "^8.2",

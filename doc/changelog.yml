@@ -1,4 +1,17 @@
 ---
+1.0.0-beta2:
+  api: 1.0.0-beta2
+  state:
+    release: beta
+    api: beta
+  date: 2026-04-12
+  license:
+    identifier: LGPL-2.1-only
+    uri: https://spdx.org/licenses/LGPL-2.1-only.html
+  notes: |-
+    docs: Add asset linker documentation
+    test: Add unit tests for asset linker
+    feat: Vendor Assets syntax
 1.0.0-beta1:
   api: 1.0.0-beta1
   state:
