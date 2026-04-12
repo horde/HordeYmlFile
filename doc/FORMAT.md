@@ -642,6 +642,55 @@ config:
 
 **Note:** Most config options are not needed in library .horde.yml files.
 
+### Vendor Asset Mapping
+
+#### `vendor-assets` (array of objects, optional)
+
+Declares that third-party composer packages contain web assets (JS, CSS, etc.) that need to be exposed in a web-accessible location. The Horde installer plugin reads these declarations and symlinks or copies the assets during reconfiguration.
+
+**Structure:**
+```yaml
+vendor-assets:
+  - package: string   # Composer package name (required)
+    type: string      # Asset type: "js" (required)
+    source: string    # Subdirectory within vendor package (optional, default: root)
+    target: string    # Target directory name (required)
+```
+
+**Fields:**
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `package` | yes | Composer package name. Must also be listed in `dependencies.required.composer` or `dependencies.dev.composer`. |
+| `type` | yes | Asset type. Currently only `js` is supported. Determines which linker handles the assets and the base target directory. |
+| `source` | no | Subdirectory within the vendor package to expose. Omit or use empty string to expose the package root. |
+| `target` | yes | Target directory name, relative to the type's base directory. For `type: js`, this is relative to `web/js/horde/`. |
+
+**Validation:** horde-components will abort composer.json generation if a `vendor-assets` entry references a package not declared in dependencies. This prevents dangling asset references.
+
+**Example:**
+```yaml
+vendor-assets:
+  - package: tinymce/tinymce
+    type: js
+    target: tinymce
+```
+
+This maps `vendor/tinymce/tinymce/` to `web/js/horde/tinymce/`.
+
+**Example with subdirectory source:**
+```yaml
+vendor-assets:
+  - package: vendor/library
+    type: js
+    source: dist/js
+    target: mylib
+```
+
+This maps `vendor/SomeVendor/library/dist/js/` to `web/js/horde/mylib/`.
+
+**Composer.json mapping:** Written to `extra.horde-vendor-assets` array in composer.json. The installer plugin reads this field from installed packages during reconfiguration.
+
 #### `extra` (object, optional)
 Arbitrary data for use by scripts or plugins.
 
@@ -920,6 +969,10 @@ horde-components release h6
 
 ## Version History
 
+- **1.2** (2026-04-12): Added vendor asset mapping support
+  - Added `vendor-assets` section for declaring third-party web assets
+  - Supports `type: js` for JavaScript assets handled by JsTreeLinker
+  - Validated against dependencies to prevent dangling references
 - **1.1** (2026-03-29): Added PHP extension support
   - Added `extension` as valid type
   - Documented PIE (PHP Installer for Extensions) compatibility
