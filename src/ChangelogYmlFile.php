@@ -29,11 +29,37 @@ class ChangelogYmlFile implements Stringable
         // Load YAML representation
         try {
             $data = Yaml::load($content);
-            $this->changelogYml = $this->arrayToObject($data ?? []);
+            $data = $this->normalizeChangelogData($data ?? []);
+            $this->changelogYml = $this->arrayToObject($data);
         } catch (YamlException $e) {
             throw new InvalidChangelogFileException("Failed to parse YAML: {$this->filePath}", 0, $e);
         }
         $this->originalContent = $content;
+    }
+
+    /**
+     * Normalize list-format changelogs (array of objects with 'version' key)
+     * into the expected associative format (version string => entry).
+     */
+    private function normalizeChangelogData(array $data): array
+    {
+        if (empty($data)) {
+            return [];
+        }
+        // Already associative format (version as key)
+        if (!array_is_list($data)) {
+            return $data;
+        }
+        // List format: each element has a 'version' key
+        $normalized = [];
+        foreach ($data as $entry) {
+            if (is_array($entry) && isset($entry['version'])) {
+                $version = $entry['version'];
+                unset($entry['version']);
+                $normalized[$version] = $entry;
+            }
+        }
+        return $normalized;
     }
 
     /**
