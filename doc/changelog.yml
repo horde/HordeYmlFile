@@ -1,4 +1,27 @@
 ---
+1.0.0-RC2:
+  api: 1.0.0-RC2
+  state:
+    release: RC
+    api: RC
+  date: 2026-06-12
+  license:
+    identifier: LGPL-2.1-only
+    uri: https://spdx.org/licenses/LGPL-2.1-only.html
+  notes: |-
+    fix: Sorting of changelog on write, including previous misordering
+    chore: Update workflow dependency
+1.0.0-RC1:
+  api: 1.0.0-RC1
+  state:
+    release: RC
+    api: RC
+  date: 2026-05-21
+  license:
+    identifier: LGPL-2.1-only
+    uri: https://spdx.org/licenses/LGPL-2.1-only.html
+  notes: |-
+    fix: Handle changelogs in list format by internal normalization9
 1.0.0-beta2:
   api: 1.0.0-beta2
   state:
@@ -37,17 +60,6 @@
     uri: http://www.horde.org/licenses/lgpl21
   notes: |
     Initial component version
-1.0.0-RC1:
-  api: 1.0.0-RC1
-  state:
-    release: RC
-    api: RC
-  date: 2026-05-21
-  license:
-    identifier: LGPL-2.1-only
-    uri: https://spdx.org/licenses/LGPL-2.1-only.html
-  notes: |-
-    fix: Handle changelogs in list format by internal normalization9
 0.0.1-alpha4:
   api: 0.0.1-alpha4
   state:
