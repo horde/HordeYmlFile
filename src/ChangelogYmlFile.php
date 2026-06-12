@@ -121,8 +121,12 @@ class ChangelogYmlFile implements Stringable
         $changelog = (array) $this->changelogYml;
         $changelog[$version] = (object) $entry;
 
-        // Sort by version (newest first) using natural comparison
-        uksort($changelog, fn($a, $b) => strnatcmp($b, $a));
+        // Sort by version (newest first). Use version_compare so semver
+        // pre-release tokens (alpha/beta/RC) are recognized regardless of
+        // whether the dash separator is present (e.g. legacy "3.0.0alpha6"
+        // mixes correctly with "3.0.0-beta2"). strnatcmp would order these
+        // by raw bytes and bury "3.0.0-beta2" below the "3.0.0alphaN" set.
+        uksort($changelog, fn($a, $b) => version_compare($b, $a));
 
         $this->changelogYml = (object) $changelog;
         return $this;

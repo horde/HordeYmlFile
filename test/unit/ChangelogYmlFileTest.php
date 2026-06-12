@@ -243,6 +243,29 @@ class ChangelogYmlFileTest extends TestCase
         $this->assertEquals('2.0.0', $versions[0]);
     }
 
+    /**
+     * Regression: mixed legacy "3.0.0alphaN" and modern "3.0.0-betaN" keys
+     * must still order newest-first. strnatcmp compares dash and letter
+     * byte-wise and buries the dashed beta below all undashed alphas;
+     * version_compare recognizes the prerelease tokens regardless of dash.
+     */
+    public function testAddVersionEntrySortsMixedDashedAndUndashedPrereleases(): void
+    {
+        $file = $this->createTempChangelog([]);
+
+        $changelog = new ChangelogYmlFile($file);
+        $changelog->addVersionEntry('3.0.0alpha6', ['notes' => 'Legacy alpha']);
+        $changelog->addVersionEntry('3.0.0-beta2', ['notes' => 'Modern beta']);
+        $changelog->addVersionEntry('3.0.0-RC1', ['notes' => 'Modern RC']);
+        $changelog->addVersionEntry('2.30.5', ['notes' => 'Old stable']);
+
+        $versions = $changelog->getVersions();
+        $this->assertEquals(
+            ['3.0.0-RC1', '3.0.0-beta2', '3.0.0alpha6', '2.30.5'],
+            $versions
+        );
+    }
+
     // ========== Getting Versions List Tests ==========
 
     public function testGetVersions(): void
