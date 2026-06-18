@@ -272,6 +272,104 @@ class ChangelogYmlFile implements Stringable
             }
             $existing->setValueInternal($this->buildNode($value) ?? new MapNode());
         }
+
+        // Reorder entry-runs to match the stdClass property order.
+        // Each entry's preceding standalone trivia (comments and
+        // blank lines, until the previous entry or the start of the
+        // children list) travels with the entry. The leading group
+        // (trivia before the first entry) stays at file-leading.
+        $this->reorderEntries($root, $stdKeys);
+    }
+
+    /**
+     * Permute the root MapNode's children so the entries appear in
+     * the order given by $stdKeys. Each entry's preceding
+     * standalone trivia run (CommentNode + BlankLineNode siblings
+     * since the previous entry) moves with the entry. The trivia
+     * preceding the first entry (file-leading banner) stays at the
+     * top of the children list, ahead of every entry-run.
+     *
+     * @param list<int|string> $stdKeys
+     */
+    private function reorderEntries(MapNode $root, array $stdKeys): void
+    {
+        $children = &$this->mapChildrenRef($root);
+        if ($children === []) {
+            unset($children);
+            return;
+        }
+
+        // Split the children list into groups. Each group is either
+        // [trivia..., MapEntry] or, for the leading run if no
+        // entry follows, [trivia...]. The first group is always the
+        // file-leading run (may be empty).
+        $leading = [];
+        $groups = []; // indexed by entry key
+        $current = [];
+        foreach ($children as $child) {
+            $current[] = $child;
+            if ($child instanceof MapEntry) {
+                $keyNode = $child->getKey();
+                $key = $keyNode instanceof ScalarNode ? $keyNode->getValue() : null;
+                if ($key === null) {
+                    // Compound or non-scalar key: keep this group in
+                    // its original position by anchoring it under a
+                    // unique pseudo-key. Entry-run reorder skips it.
+                    $key = "\0compound-" . spl_object_id($child);
+                }
+                $groups[(string) $key] = $current;
+                $current = [];
+            }
+        }
+        // Anything left in $current is trailing trivia after the
+        // last entry. Carry it forward as a final orphan group.
+        $trailing = $current;
+
+        // Emit the leading run unchanged. (No entry preceded it, so
+        // it is not bound to any specific entry.)
+        $newOrder = $leading;
+
+        // Emit entry-runs in stdClass order. Keys not in stdKeys
+        // (only happens if the AST has compound keys we couldn't
+        // sort) emit afterwards in their original order.
+        $emittedKeys = [];
+        foreach ($stdKeys as $key) {
+            $key = (string) $key;
+            if (isset($groups[$key])) {
+                $newOrder = array_merge($newOrder, $groups[$key]);
+                $emittedKeys[$key] = true;
+            }
+        }
+        foreach ($groups as $key => $group) {
+            if (!isset($emittedKeys[$key])) {
+                $newOrder = array_merge($newOrder, $group);
+            }
+        }
+
+        $newOrder = array_merge($newOrder, $trailing);
+        $children = $newOrder;
+        unset($children);
+    }
+
+    /**
+     * Reach into a MapNode's private $children array via a Closure
+     * bound to the MapNode class so the syncer can permute the
+     * children list while preserving each child's parent link.
+     * MapNode does not expose a public reorder method.
+     *
+     * @return array<int, MapEntry|\Horde\Yaml\Document\Node\CommentNode|\Horde\Yaml\Document\Node\BlankLineNode>
+     */
+    private function &mapChildrenRef(MapNode $map): array
+    {
+        $accessor = \Closure::bind(
+            function & () {
+                return $this->children;
+            },
+            $map,
+            MapNode::class,
+        );
+        $array = &$accessor();
+        return $array;
     }
 
     /**

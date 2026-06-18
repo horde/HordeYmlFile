@@ -93,4 +93,40 @@ class RoundTripChangelogTest extends TestCase
         $this->assertLessThan($pos300, $pos310);
         $this->assertLessThan($pos210, $pos300);
     }
+
+    /**
+     * Regression: when the file on disk is not in version-compare
+     * order, add multiple new versions, the emitted YAML must end
+     * up sorted by version_compare. This catches the case where a
+     * naive insert-before-next-existing-key respects stale AST
+     * positions and produces wrong order.
+     */
+    public function testReorderEntriesWhenSourceIsUnsortedAndNewVersionsAdded(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'cl_') . '.yml';
+        // Source is intentionally unsorted: 2.0.0 before 3.0.0.
+        file_put_contents($path, "---\n2.0.0:\n  notes: old\n3.0.0:\n  notes: middle\n");
+
+        try {
+            $file = new ChangelogYmlFile($path);
+            $file->addVersionEntry('2.5.0', ['notes' => 'between']);
+            $file->addVersionEntry('4.0.0', ['notes' => 'newest']);
+            $output = (string) $file;
+
+            $pos400 = strpos($output, '4.0.0:');
+            $pos300 = strpos($output, '3.0.0:');
+            $pos250 = strpos($output, '2.5.0:');
+            $pos200 = strpos($output, '2.0.0:');
+
+            $this->assertNotFalse($pos400);
+            $this->assertNotFalse($pos300);
+            $this->assertNotFalse($pos250);
+            $this->assertNotFalse($pos200);
+            $this->assertLessThan($pos300, $pos400);
+            $this->assertLessThan($pos250, $pos300);
+            $this->assertLessThan($pos200, $pos250);
+        } finally {
+            @unlink($path);
+        }
+    }
 }
