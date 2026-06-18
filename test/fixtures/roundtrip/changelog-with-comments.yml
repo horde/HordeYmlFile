@@ -1,0 +1,26 @@
+---
+# Changelog for the Test component.
+# Newest entries first.
+
+3.0.0:
+  api: 3.0.0
+  state:
+    release: stable
+    api: stable
+  date: 2026-02-28
+  license:
+    identifier: BSD-2-Clause
+    uri: http://www.horde.org/licenses/bsd
+  notes: First stable release.
+
+# Pre-release line below.
+2.1.0:
+  api: 1.0.0
+  state:
+    release: stable
+    api: stable
+  date: 2021-10-24
+  license:
+    identifier: BSD-2-Clause
+    uri: http://www.horde.org/licenses/bsd
+  notes: Backport fixes.
