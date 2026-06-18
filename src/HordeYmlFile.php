@@ -224,15 +224,32 @@ class HordeYmlFile implements Stringable
             }
         }
 
-        // Update or append, preserving stdClass property order so a
-        // freshly-set key lands at the end. Existing keys retain
-        // their AST position and trivia.
+        // Update or insert. New keys land at the position dictated
+        // by the stdClass property order: between the previous and
+        // the next existing key. Append only when no existing key
+        // follows.
+        $stdKeys = array_keys($current);
         foreach ($current as $key => $value) {
             $key = (string) $key;
             $existing = $root->entry($key);
             if ($existing === null) {
                 $newNode = $this->buildNode($value) ?? new MapNode();
-                $root->appendChildInternal(new MapEntry(new ScalarNode($key), $newNode));
+                $stdIdx = array_search($key, $stdKeys, true);
+                $insertedBefore = false;
+                if ($stdIdx !== false) {
+                    for ($i = $stdIdx + 1; $i < count($stdKeys); $i++) {
+                        $followingKey = (string) $stdKeys[$i];
+                        $followingEntry = $root->entry($followingKey);
+                        if ($followingEntry !== null) {
+                            $root->insertEntryBefore($followingEntry, $key, $newNode);
+                            $insertedBefore = true;
+                            break;
+                        }
+                    }
+                }
+                if (!$insertedBefore) {
+                    $root->appendChildInternal(new MapEntry(new ScalarNode($key), $newNode));
+                }
                 continue;
             }
             if ($this->valuesEqual($existing->getValue(), $value)) {
