@@ -1,0 +1,7 @@
+id: TestComponent  # the stable component id
+name: TestComponent
+vendor: horde
+type: library  # always library for our packages
+version:
+  release: 1.2.3  # current target
+  api: 1.0.0

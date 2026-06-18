@@ -172,30 +172,111 @@ class HordeYmlFile implements Stringable
     }
 
     /**
-     * Reflect the current stdClass facade into the AST. Step 3
-     * implementation: rebuild the first document's root from
-     * scratch. This loses comments and trivia inside the document.
-     * Step 4 will replace this with a top-level diff-and-apply
-     * syncer that preserves comments around unchanged entries.
+     * Reflect the current stdClass facade into the AST. Top-level
+     * diff-and-apply: each property of the stdClass becomes (or
+     * replaces) an entry in the document's root MapNode. Trivia
+     * around unchanged entries (comments, blank lines, EOL
+     * comments) is preserved. When a top-level entry's value
+     * subtree changes, only that subtree is rebuilt; trivia inside
+     * a rebuilt subtree is lost.
      */
     private function syncStreamFromHordeYml(): void
     {
-        $root = $this->buildNode($this->hordeYml);
-        if (!$root instanceof MapNode
-            && !$root instanceof SequenceNode
-            && !$root instanceof ScalarNode
-        ) {
-            // null root for an empty stdClass yields a fresh empty
-            // map so the document has a well-formed body.
-            $root = new MapNode();
-        }
+        // Ensure the stream has a document.
         if ($this->stream->documentCount() === 0) {
             $doc = new YamlDocument();
-            $doc->setRootInternal($root);
+            $doc->setRootInternal(new MapNode());
             $this->stream->appendInternalDocument($doc);
+        }
+        $doc = $this->stream->getDocument(0);
+        $root = $doc->root();
+        // Bare-scalar root, sequence root, or no root at all: rebuild
+        // from scratch. The .horde.yml shape is always a top-level
+        // map so this only fires on degenerate input.
+        if (!$root instanceof MapNode) {
+            $newRoot = $this->buildNode($this->hordeYml) ?? new MapNode();
+            if (!$newRoot instanceof MapNode
+                && !$newRoot instanceof SequenceNode
+                && !$newRoot instanceof ScalarNode
+            ) {
+                $newRoot = new MapNode();
+            }
+            $doc->setRootInternal($newRoot);
             return;
         }
-        $this->stream->getDocument(0)->setRootInternal($root);
+
+        $current = (array) $this->hordeYml;
+        $existingKeys = [];
+        foreach ($root->entries() as $entry) {
+            $keyNode = $entry->getKey();
+            if ($keyNode instanceof ScalarNode) {
+                $keyValue = $keyNode->getValue();
+                if ($keyValue !== null) {
+                    $existingKeys[(string) $keyValue] = $entry;
+                }
+            }
+        }
+
+        // Remove keys present in AST but absent from the stdClass.
+        foreach ($existingKeys as $key => $entry) {
+            if (!array_key_exists($key, $current)) {
+                $root->removeEntry($entry);
+            }
+        }
+
+        // Update or append, preserving stdClass property order so a
+        // freshly-set key lands at the end. Existing keys retain
+        // their AST position and trivia.
+        foreach ($current as $key => $value) {
+            $key = (string) $key;
+            $existing = $root->entry($key);
+            if ($existing === null) {
+                $newNode = $this->buildNode($value) ?? new MapNode();
+                $root->appendChildInternal(new MapEntry(new ScalarNode($key), $newNode));
+                continue;
+            }
+            if ($this->valuesEqual($existing->getValue(), $value)) {
+                continue;
+            }
+            $existing->setValueInternal($this->buildNode($value) ?? new MapNode());
+        }
+    }
+
+    /**
+     * Compare an existing AST node's logical value against a
+     * stdClass-or-array-or-scalar value drawn from the stdClass
+     * facade. Returns true when they would emit identically. Used
+     * to skip rebuilding subtrees that did not change.
+     */
+    private function valuesEqual(Node $node, mixed $value): bool
+    {
+        $nodeValue = $this->nodeToArray($node);
+        $stdValue = $this->stdClassToArray($value);
+        return $nodeValue === $stdValue;
+    }
+
+    /**
+     * Recursively convert a stdClass-or-array tree into the same
+     * shape that nodeToArray produces, so the two can be compared
+     * with === in valuesEqual.
+     */
+    private function stdClassToArray(mixed $value): mixed
+    {
+        if ($value instanceof stdClass) {
+            $out = [];
+            foreach ((array) $value as $k => $v) {
+                $out[(string) $k] = $this->stdClassToArray($v);
+            }
+            return $out;
+        }
+        if (is_array($value)) {
+            $out = [];
+            foreach ($value as $k => $v) {
+                $out[$k] = $this->stdClassToArray($v);
+            }
+            return $out;
+        }
+        return $value;
     }
 
     /**
