@@ -1,0 +1,19 @@
+# Component manifest header
+# Maintained by hand. Do not auto-rewrite blindly.
+
+id: TestComponent
+name: TestComponent
+
+# Bump on every release.
+vendor: horde
+type: library
+
+# Version block
+version:
+  release: 1.2.3
+  api: 1.0.0
+
+# State block
+state:
+  release: stable
+  api: stable
