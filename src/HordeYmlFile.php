@@ -12,12 +12,17 @@ use Horde\Yaml\Yaml;
 use Horde\Yaml\Exception as YamlException;
 use Horde\Yaml\Document\Exception as DocumentException;
 use Horde\Yaml\Document\Node\AliasNode;
+use Horde\Yaml\Document\Node\MapEntry;
 use Horde\Yaml\Document\Node\MapNode;
 use Horde\Yaml\Document\Node\Node;
 use Horde\Yaml\Document\Node\ScalarNode;
+use Horde\Yaml\Document\Node\SequenceItem;
 use Horde\Yaml\Document\Node\SequenceNode;
+use Horde\Yaml\Document\YamlDocument;
+use Horde\Yaml\Document\YamlFileDumper;
 use Horde\Yaml\Document\YamlFileLoader;
 use Horde\Yaml\Document\YamlStream;
+use Horde\Yaml\Document\YamlStringDumper;
 
 class HordeYmlFile implements Stringable
 {
@@ -151,17 +156,92 @@ class HordeYmlFile implements Stringable
 
     public function __toString(): string
     {
-        // Convert objects back to arrays for YAML dumping
-        $data = json_decode(json_encode($this->hordeYml), true);
-        return Yaml::dump($data, ['wordwrap' => 78, 'indent' => 2]);
+        $this->syncStreamFromHordeYml();
+        return (new YamlStringDumper())->dump($this->stream);
     }
 
     public function save(): void
     {
         $this->applyGracefulUpdates();
-        if (file_put_contents($this->filePath, $this) === false) {
-            throw new RuntimeException("Failed to write to file: {$this->filePath}");
+        $this->syncStreamFromHordeYml();
+        try {
+            (new YamlFileDumper())->dump($this->stream, $this->filePath);
+        } catch (DocumentException $e) {
+            throw new RuntimeException("Failed to write to file: {$this->filePath}", 0, $e);
         }
+    }
+
+    /**
+     * Reflect the current stdClass facade into the AST. Step 3
+     * implementation: rebuild the first document's root from
+     * scratch. This loses comments and trivia inside the document.
+     * Step 4 will replace this with a top-level diff-and-apply
+     * syncer that preserves comments around unchanged entries.
+     */
+    private function syncStreamFromHordeYml(): void
+    {
+        $root = $this->buildNode($this->hordeYml);
+        if (!$root instanceof MapNode
+            && !$root instanceof SequenceNode
+            && !$root instanceof ScalarNode
+        ) {
+            // null root for an empty stdClass yields a fresh empty
+            // map so the document has a well-formed body.
+            $root = new MapNode();
+        }
+        if ($this->stream->documentCount() === 0) {
+            $doc = new YamlDocument();
+            $doc->setRootInternal($root);
+            $this->stream->appendInternalDocument($doc);
+            return;
+        }
+        $this->stream->getDocument(0)->setRootInternal($root);
+    }
+
+    /**
+     * Build a value-position AST node from a plain PHP value.
+     * Maps stdClass to MapNode, list-arrays to SequenceNode,
+     * associative arrays to MapNode, scalars to ScalarNode. Returns
+     * null when the input is an empty stdClass with no properties
+     * (the caller decides whether to coerce that to an empty map
+     * or a null root).
+     */
+    private function buildNode(mixed $value): MapNode|SequenceNode|ScalarNode|null
+    {
+        if ($value instanceof stdClass) {
+            $map = new MapNode();
+            foreach ((array) $value as $key => $child) {
+                $childNode = $this->buildNode($child) ?? new MapNode();
+                $entry = new MapEntry(new ScalarNode((string) $key), $childNode);
+                $map->appendChildInternal($entry);
+            }
+            return $map;
+        }
+        if (is_array($value)) {
+            $isList = $value === [] || array_is_list($value);
+            if ($isList) {
+                $seq = new SequenceNode();
+                foreach ($value as $child) {
+                    $childNode = $this->buildNode($child) ?? new ScalarNode(null);
+                    $seq->appendChildInternal(new SequenceItem($childNode));
+                }
+                return $seq;
+            }
+            $map = new MapNode();
+            foreach ($value as $key => $child) {
+                $childNode = $this->buildNode($child) ?? new MapNode();
+                $entry = new MapEntry(new ScalarNode((string) $key), $childNode);
+                $map->appendChildInternal($entry);
+            }
+            return $map;
+        }
+        if ($value === null || is_scalar($value)) {
+            return new ScalarNode($value);
+        }
+        if ($value instanceof Stringable) {
+            return new ScalarNode((string) $value);
+        }
+        return null;
     }
 
     public function getName(bool $failIfMissing = false): string
