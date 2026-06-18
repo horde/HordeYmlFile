@@ -10,6 +10,14 @@ use stdClass;
 use Stringable;
 use Horde\Yaml\Yaml;
 use Horde\Yaml\Exception as YamlException;
+use Horde\Yaml\Document\Exception as DocumentException;
+use Horde\Yaml\Document\Node\AliasNode;
+use Horde\Yaml\Document\Node\MapNode;
+use Horde\Yaml\Document\Node\Node;
+use Horde\Yaml\Document\Node\ScalarNode;
+use Horde\Yaml\Document\Node\SequenceNode;
+use Horde\Yaml\Document\YamlFileLoader;
+use Horde\Yaml\Document\YamlStream;
 
 class HordeYmlFile implements Stringable
 {
@@ -26,19 +34,92 @@ class HordeYmlFile implements Stringable
             throw new InvalidHordeYmlFileException("File is not readable: {$this->filePath}");
         }
         $content = file_get_contents($this->filePath);
-        // Load YAML representation
+        // Load YAML representation via the document layer. The
+        // document layer preserves comments, blank lines, and
+        // formatting on the AST so a future save() can write back
+        // byte-identical for untouched parts of the file.
         try {
-            // Handle empty files
-            if (trim($content) === '' || trim($content) === '---') {
-                $this->hordeYml = new stdClass();
-            } else {
-                $data = Yaml::load($content);
-                $this->hordeYml = $this->arrayToObject($data ?? []);
-            }
-        } catch (YamlException $e) {
+            $stream = (new YamlFileLoader())->load($this->filePath);
+            $array = $this->streamToArray($stream);
+            $this->hordeYml = $this->arrayToObject($array);
+        } catch (DocumentException $e) {
             throw new InvalidHordeYmlFileException("Failed to parse YAML: {$this->filePath}", 0, $e);
         }
         $this->originalContent = $content;
+    }
+
+    /**
+     * Reduce a YamlStream to a plain PHP array shaped like what
+     * Yaml::load() returned. An empty stream (zero documents or a
+     * null root) yields an empty array. Multi-document files
+     * collapse to the first document's root, matching the legacy
+     * loader's behaviour.
+     */
+    private function streamToArray(YamlStream $stream): array
+    {
+        if ($stream->documentCount() === 0) {
+            return [];
+        }
+        $root = $stream->getDocument(0)->root();
+        if ($root === null) {
+            return [];
+        }
+        $value = $this->nodeToArray($root);
+        if (!is_array($value)) {
+            // A document whose root is a bare scalar does not match
+            // the .horde.yml shape. Surface as an empty top-level
+            // map; callers asking for typed accessors will see
+            // missing keys rather than a type error.
+            return [];
+        }
+        return $value;
+    }
+
+    /**
+     * Recursively convert a document-layer node into a plain PHP
+     * value. Maps become associative arrays. Sequences become
+     * 0-indexed arrays. Scalars unwrap to their typed value.
+     * Aliases dereference to their target's typed value (with a
+     * fallback to the alias name as a string when the target is
+     * absent, matching the legacy loader).
+     */
+    private function nodeToArray(Node $node): mixed
+    {
+        if ($node instanceof ScalarNode) {
+            return $node->getValue();
+        }
+        if ($node instanceof MapNode) {
+            $out = [];
+            foreach ($node->entries() as $entry) {
+                $key = $entry->getKey();
+                $keyValue = $key instanceof ScalarNode ? $key->getValue() : null;
+                if ($keyValue === null) {
+                    continue;
+                }
+                $out[(string) $keyValue] = $this->nodeToArray($entry->getValue());
+            }
+            return $out;
+        }
+        if ($node instanceof SequenceNode) {
+            $out = [];
+            foreach ($node->items() as $item) {
+                $value = $item->getValue();
+                if ($value === null) {
+                    $out[] = null;
+                    continue;
+                }
+                $out[] = $this->nodeToArray($value);
+            }
+            return $out;
+        }
+        if ($node instanceof AliasNode) {
+            $target = $node->target();
+            if ($target === null) {
+                return $node->getTargetName();
+            }
+            return $this->nodeToArray($target);
+        }
+        return null;
     }
 
     /**
