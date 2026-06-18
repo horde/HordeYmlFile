@@ -23,6 +23,7 @@ class HordeYmlFile implements Stringable
 {
     private stdClass $hordeYml;
     private string $originalContent;
+    private YamlStream $stream;
 
     public function __construct(
         private string $filePath
@@ -39,8 +40,8 @@ class HordeYmlFile implements Stringable
         // formatting on the AST so a future save() can write back
         // byte-identical for untouched parts of the file.
         try {
-            $stream = (new YamlFileLoader())->load($this->filePath);
-            $array = $this->streamToArray($stream);
+            $this->stream = (new YamlFileLoader())->load($this->filePath);
+            $array = $this->streamToArray($this->stream);
             $this->hordeYml = $this->arrayToObject($array);
         } catch (DocumentException $e) {
             throw new InvalidHordeYmlFileException("Failed to parse YAML: {$this->filePath}", 0, $e);
