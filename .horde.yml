@@ -113,3 +113,9 @@ ci-platform:
     - ext-tokenizer
     - ext-xml
     - ext-xmlwriter
+
+quality:
+  phpstan:
+    level: 3
+ci-platform-flags:
+  needs_installer_plugin: false
