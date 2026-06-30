@@ -21,6 +21,7 @@ use Horde\Yaml\Document\YamlFileDumper;
 use Horde\Yaml\Document\YamlFileLoader;
 use Horde\Yaml\Document\YamlStream;
 use Horde\Yaml\Document\YamlStringDumper;
+use Closure;
 
 class ChangelogYmlFile implements Stringable
 {
@@ -361,7 +362,7 @@ class ChangelogYmlFile implements Stringable
      */
     private function &mapChildrenRef(MapNode $map): array
     {
-        $accessor = \Closure::bind(
+        $accessor = Closure::bind(
             function & () {
                 return $this->children;
             },
