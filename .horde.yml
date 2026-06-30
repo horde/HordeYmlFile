@@ -20,10 +20,10 @@ authors:
     active: true
     role: contributor
 version:
-  release: 1.0.0-RC2
+  release: 1.0.0
   api: 1.0.0-alpha4
 state:
-  release: RC
+  release: stable
   api: alpha
 license:
   identifier: LGPL-2.1-only

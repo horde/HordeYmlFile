@@ -1,4 +1,14 @@
 ---
+1.0.0:
+  api: 1.0.0
+  state:
+    release: stable
+    api: stable
+  date: 2026-06-30
+  license:
+    identifier: LGPL-2.1-only
+    uri: https://spdx.org/licenses/LGPL-2.1-only.html
+  notes: "style: import Closure instead of \\Closure\nchore: update CI\nci: install horde-components CI pipeline\nfix(hordeymlfile): preserve RC2 changelog sort on save\ntest(hordeymlfile): round-trip fidelity for changelog and ordered insert\nfeat(hordeymlfile): apply same rebase to ChangelogYmlFile\nfeat(hordeymlfile): preserve trivia around unchanged top-level entries\nfeat(hordeymlfile): emit via document layer\nrefactor(hordeymlfile): keep YamlStream alongside stdClass\nrefactor(hordeymlfile): load via document layer"
 1.0.0-RC2:
   api: 1.0.0-RC2
   state:
@@ -8,9 +18,7 @@
   license:
     identifier: LGPL-2.1-only
     uri: https://spdx.org/licenses/LGPL-2.1-only.html
-  notes: |-
-    fix: Sorting of changelog on write, including previous misordering
-    chore: Update workflow dependency
+  notes: "fix: Sorting of changelog on write, including previous misordering\nchore: Update workflow dependency"
 1.0.0-RC1:
   api: 1.0.0-RC1
   state:
@@ -20,8 +28,7 @@
   license:
     identifier: LGPL-2.1-only
     uri: https://spdx.org/licenses/LGPL-2.1-only.html
-  notes: |-
-    fix: Handle changelogs in list format by internal normalization9
+  notes: 'fix: Handle changelogs in list format by internal normalization9'
 1.0.0-beta2:
   api: 1.0.0-beta2
   state:
@@ -31,10 +38,7 @@
   license:
     identifier: LGPL-2.1-only
     uri: https://spdx.org/licenses/LGPL-2.1-only.html
-  notes: |-
-    docs: Add asset linker documentation
-    test: Add unit tests for asset linker
-    feat: Vendor Assets syntax
+  notes: "docs: Add asset linker documentation\ntest: Add unit tests for asset linker\nfeat: Vendor Assets syntax"
 1.0.0-beta1:
   api: 1.0.0-beta1
   state:
@@ -44,11 +48,7 @@
   license:
     identifier: LGPL-2.1-only
     uri: https://spdx.org/licenses/LGPL-2.1-only.html
-  notes: |-
-    test: Cover Support and SupportBuilder classes
-    feat: Support the composer file "support" section.
-    docs: Document "extension" type for c code extensions to the PHP language builtins.
-    feat: Support "extension" (c-code php language extensions) as a new type.
+  notes: "test: Cover Support and SupportBuilder classes\nfeat: Support the composer file \"support\" section.\ndocs: Document \"extension\" type for c code extensions to the PHP language builtins.\nfeat: Support \"extension\" (c-code php language extensions) as a new type."
 1.0.0-alpha1:
   api: 1.0.0-alpha1
   state:
@@ -58,8 +58,7 @@
   license:
     identifier: LGPL-2.1-only
     uri: http://www.horde.org/licenses/lgpl21
-  notes: |
-    Initial component version
+  notes: "Initial component version\n"
 0.0.1-alpha4:
   api: 0.0.1-alpha4
   state:
@@ -69,10 +68,7 @@
   license:
     identifier: LGPL-2.1-only
     uri: https://spdx.org/licenses/LGPL-2.1-only.html
-  notes: |-
-    style: php-cs-fixer
-    feat: Support for composer.json and packagist.org keywords
-    docs: Document the .horde.yml format as understood by this library
+  notes: "style: php-cs-fixer\nfeat: Support for composer.json and packagist.org keywords\ndocs: Document the .horde.yml format as understood by this library"
 0.0.1-alpha3:
   api: 1.0.0-alpha1
   state:
@@ -82,8 +78,7 @@
   license:
     identifier: LGPL-2.1-only
     uri: http://www.horde.org/licenses/lgpl21
-  notes: |
-    feat: add typed classes and comprehensive test coverage
+  notes: "feat: add typed classes and comprehensive test coverage\n"
 0.0.1-alpha2:
   api: 1.0.0-alpha1
   state:
@@ -93,5 +88,4 @@
   license:
     identifier: LGPL-2.1-only
     uri: http://www.horde.org/licenses/lgpl21
-  notes: |
-    feat: Gracefully upgrade older .horde.yml files to expose defaults more explicitly
+  notes: "feat: Gracefully upgrade older .horde.yml files to expose defaults more explicitly\n"
