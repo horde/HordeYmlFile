@@ -46,9 +46,6 @@
             "Horde\\HordeYmlFile\\Test\\Fixtures\\": "test/fixtures/"
         }
     },
-    "bin": [
-        "bin/ci-bootstrap.sh"
-    ],
     "config": {
         "allow-plugins": {}
     },
