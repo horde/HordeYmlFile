@@ -16,6 +16,7 @@ use Horde\Yaml\Document\Node\Node;
 use Horde\Yaml\Document\Node\ScalarNode;
 use Horde\Yaml\Document\Node\SequenceItem;
 use Horde\Yaml\Document\Node\SequenceNode;
+use Horde\Yaml\Document\UnresolvedAliasException;
 use Horde\Yaml\Document\YamlDocument;
 use Horde\Yaml\Document\YamlFileDumper;
 use Horde\Yaml\Document\YamlFileLoader;
@@ -109,11 +110,11 @@ class ChangelogYmlFile implements Stringable
             return $out;
         }
         if ($node instanceof AliasNode) {
-            $target = $node->target();
-            if ($target === null) {
+            try {
+                return $this->nodeToArray($node->target());
+            } catch (UnresolvedAliasException) {
                 return $node->getTargetName();
             }
-            return $this->nodeToArray($target);
         }
         return null;
     }
@@ -210,12 +211,6 @@ class ChangelogYmlFile implements Stringable
         $root = $doc->root();
         if (!$root instanceof MapNode) {
             $newRoot = $this->buildNode($this->changelogYml) ?? new MapNode();
-            if (!$newRoot instanceof MapNode
-                && !$newRoot instanceof SequenceNode
-                && !$newRoot instanceof ScalarNode
-            ) {
-                $newRoot = new MapNode();
-            }
             $doc->setRootInternal($newRoot);
             return;
         }
